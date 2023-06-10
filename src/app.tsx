@@ -1,9 +1,11 @@
 import './app.css'
 
-export function App() {
+import Canvas from "./components/Canvas";
 
+export function App() {
   return (
-    <>
-    </>
+      <div class="container">
+        <Canvas></Canvas>
+      </div>
   )
 }

@@ -1,22 +1,30 @@
 import { useState, useRef, useEffect } from "preact/hooks";
 
-import { Location, Size, Color } from "./types";
+import {
+  Location,
+  Color,
+  Node,
+  Grid,
+  Algorithm,
+  AlgorithmResult,
+} from "../types";
 
-function Canvas() {
+function Canvas({ algorithm }: { algorithm: Algorithm }) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
+  const COLOR_START_MAIN = { r: 255, g: 0, b: 0 };
+  const COLOR_END_MAIN = { r: 0, g: 0, b: 255 };
   const COLOR_EMPTY_MAIN = { r: 255, g: 255, b: 255 };
   const COLOR_WALL_MAIN = { r: 0, g: 0, b: 0 };
   const COLOR_WALL_ALT = { r: 96, g: 96, b: 96 };
+  const COLOR_EXPLORE_MAIN = { r: 67, g: 176, b: 67 };
+  const COLOR_EXPLORE_ALT = { r: 89, g: 125, b: 53 };
+  const COLOR_PATH_MAIN = { r: 277, g: 66, b: 52 };
+  const COLOR_PATH_ALT = { r: 242, g: 133, b: 0 };
 
-  enum Node {
-    Empty,
-    Wall,
-    Start,
-    End,
-  }
-
-  const nodes = useRef<Array<Array<Node>>>([]);
+  const source = useRef<Location>({ x: -1, y: -1 });
+  const target = useRef<Location>({ x: -1, y: -1 });
+  const nodes = useRef<Grid>([]);
   const [lastLocation, setLastLocation] = useState<Location>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
@@ -30,28 +38,36 @@ function Canvas() {
     return canvas.height / RECT_SIZE;
   };
 
-  const getNodeColor = (node: Node): Color => {
+  const getNodeColors = (
+    node: Node
+  ): { main: Color; alt: Color | undefined } => {
     switch (node) {
+      case Node.Start:
+        return { main: COLOR_START_MAIN, alt: undefined };
+      case Node.End:
+        return { main: COLOR_END_MAIN, alt: undefined };
       case Node.Wall:
-        return COLOR_WALL_MAIN;
+        return { main: COLOR_WALL_MAIN, alt: COLOR_WALL_ALT };
+      case Node.Explore:
+        return { main: COLOR_EXPLORE_MAIN, alt: COLOR_EXPLORE_ALT };
+      case Node.Path:
+        return { main: COLOR_PATH_MAIN, alt: COLOR_PATH_ALT };
       default:
-        return COLOR_EMPTY_MAIN;
+        return { main: COLOR_EMPTY_MAIN, alt: undefined };
     }
   };
 
   const drawNode = (
     context: CanvasRenderingContext2D,
     location: Location,
-    size: Size,
     color: Color
   ) => {
     const { x, y } = location;
-    const { width, height } = size;
     const { r, g, b } = color;
 
     context.beginPath();
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    context.rect(x, y, width, height);
+    context.rect(x, y, RECT_SIZE, RECT_SIZE);
     context.fill();
     context.stroke();
     context.closePath();
@@ -60,35 +76,37 @@ function Canvas() {
   const animateNode = (
     context: CanvasRenderingContext2D,
     location: Location,
-    size: Size,
-    startColor: Color,
-    endColor: Color,
     type: Node
   ) => {
     const { x, y } = location;
+    const { main, alt } = getNodeColors(type);
+
+    if (!alt) {
+      drawNode(context, location, main);
+      return;
+    }
 
     const steps = 50;
 
-    const dr = (startColor.r - endColor.r) / steps;
-    const dg = (startColor.g - endColor.g) / steps;
-    const db = (startColor.b - endColor.b) / steps;
+    const dr = (alt.r - main.r) / steps;
+    const dg = (alt.g - main.g) / steps;
+    const db = (alt.b - main.b) / steps;
 
     let step = 0;
 
     const animation = setInterval(() => {
       const color = {
-        r: Math.round(startColor.r - dr * step),
-        g: Math.round(startColor.g - dg * step),
-        b: Math.round(startColor.b - db * step),
+        r: Math.round(alt.r - dr * step),
+        g: Math.round(alt.g - dg * step),
+        b: Math.round(alt.b - db * step),
       };
-      console.log(color);
-      drawNode(context, location, size, color);
+      drawNode(context, location, color);
 
       const node = nodes.current[x / RECT_SIZE][y / RECT_SIZE];
 
       if (step === steps || node !== type) {
         clearInterval(animation);
-        drawNode(context, location, size, getNodeColor(node));
+        drawNode(context, location, main);
       }
 
       step++;
@@ -109,10 +127,9 @@ function Canvas() {
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         const location = { x: i * RECT_SIZE, y: j * RECT_SIZE };
-        const size = { width: RECT_SIZE, height: RECT_SIZE };
-        const color = getNodeColor(nodes.current[i][j]);
+        const color = getNodeColors(nodes.current[i][j]).main;
 
-        drawNode(context, location, size, color);
+        drawNode(context, location, color);
       }
     }
   };
@@ -131,30 +148,78 @@ function Canvas() {
 
     const type = node === Node.Wall ? Node.Empty : Node.Wall;
 
-    nodes.current = nodes.current.map((row, index) => {
-      if (index === x) {
-        row[y] = type;
-        return row;
-      } else {
-        return row;
-      }
-    });
-
-    const size = { width: RECT_SIZE, height: RECT_SIZE };
-    const color = getNodeColor(type);
+    nodes.current[x][y] = type;
 
     if (type === Node.Wall) {
-      animateNode(
+      animateNode(context, { x: x * RECT_SIZE, y: y * RECT_SIZE }, type);
+    } else {
+      drawNode(
         context,
         { x: x * RECT_SIZE, y: y * RECT_SIZE },
-        size,
-        COLOR_WALL_ALT,
-        color,
-        type
+        getNodeColors(type).main
       );
-    } else {
-      drawNode(context, { x: x * RECT_SIZE, y: y * RECT_SIZE }, size, color);
     }
+  };
+
+  const solve = () => {
+    if (!canvas.current) {
+      return;
+    }
+
+    const context: CanvasRenderingContext2D | null =
+      canvas.current.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    const { explored, path }: AlgorithmResult = algorithm(
+      [...nodes.current],
+      source.current,
+      target.current
+    );
+
+    const animationTime = 50;
+    const pathDelayTime = 1000;
+    let currentTime = 0;
+
+    explored.forEach((location) => {
+      const { x, y } = location;
+
+      nodes.current[x][y] = Node.Explore;
+
+      setTimeout(
+        () =>
+          animateNode(
+            context,
+            { x: x * RECT_SIZE, y: y * RECT_SIZE },
+            Node.Explore
+          ),
+        currentTime
+      );
+
+      currentTime += animationTime;
+    });
+
+    setTimeout(() => {
+      currentTime = 0;
+      path.forEach((location) => {
+        const { x, y } = location;
+
+        nodes.current[x][y] = Node.Path;
+
+        setTimeout(
+          () =>
+            animateNode(
+              context,
+              { x: x * RECT_SIZE, y: y * RECT_SIZE },
+              Node.Path
+            ),
+          currentTime
+        );
+        currentTime += animationTime;
+      });
+    }, animationTime * explored.length + pathDelayTime);
   };
 
   const getLocation = (e: MouseEvent): Location => {
@@ -201,6 +266,13 @@ function Canvas() {
     setPointerDown(false);
   };
 
+  const getRandomLocation = (): Location => {
+    return {
+      x: Math.floor(Math.random() * nodes.current.length),
+      y: Math.floor(Math.random() * nodes.current[0].length),
+    };
+  };
+
   useEffect(() => {
     const handleResize = () => {
       if (!canvas.current) {
@@ -227,6 +299,15 @@ function Canvas() {
         .fill(Node.Empty)
         .map(() => new Array(columnCount).fill(Node.Empty));
 
+      source.current = getRandomLocation();
+      target.current = getRandomLocation();
+
+      const { x: sx, y: sy } = source.current;
+      const { x: tx, y: ty } = target.current;
+
+      nodes.current[sx][sy] = Node.Start;
+      nodes.current[tx][ty] = Node.End;
+
       drawGrid(canvas.current, context);
     };
 
@@ -240,14 +321,17 @@ function Canvas() {
   }, []);
 
   return (
-    <div class="canvas-container">
-      <canvas
-        onMouseMove={handleMouseMove}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        ref={canvas}
-      ></canvas>
-    </div>
+    <>
+      <div class="canvas-container">
+        <canvas
+          onMouseMove={handleMouseMove}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          ref={canvas}
+        ></canvas>
+      </div>
+      <button onClick={() => solve()}>Solve</button>
+    </>
   );
 }
 

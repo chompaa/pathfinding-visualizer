@@ -69,7 +69,7 @@ const Canvas = ({
 
     context.beginPath();
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    context.rect(x, y, RECT_SIZE, RECT_SIZE);
+    context.rect(x + 0.5, y + 0.5, RECT_SIZE, RECT_SIZE);
     context.fill();
     context.stroke();
     context.closePath();

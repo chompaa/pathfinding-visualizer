@@ -2,6 +2,7 @@ import MenuItem from "./MenuItem";
 
 import { IconRefresh, IconRoute } from "@tabler/icons-preact";
 import { PathfindingAlgorithmType } from "../../algorithms";
+import MenuSeparator from "./MenuSeparator";
 
 const Menu = ({ setAlgorithm }: { setAlgorithm: Function }) => {
   return (
@@ -11,6 +12,7 @@ const Menu = ({ setAlgorithm }: { setAlgorithm: Function }) => {
         icon={<IconRefresh />}
         onClick={() => {}}
       ></MenuItem>
+      <MenuSeparator></MenuSeparator>
       <MenuItem
         title={"Solve"}
         icon={<IconRoute />}

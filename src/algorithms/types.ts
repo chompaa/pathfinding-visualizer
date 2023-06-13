@@ -6,10 +6,18 @@ export type PathfindingAlgorithmResult = {
 };
 
 export type PathfindingAlgorithm = {
-  description: string;
   (nodes: Grid, source: Point, target: Point): PathfindingAlgorithmResult;
 };
 
 export enum PathfindingAlgorithmType {
   Dijkstra,
 }
+
+export type PathfindingAlgorithmObject = {
+  title: string;
+  algorithm: PathfindingAlgorithm;
+};
+
+export type PathfindingAlgorithmList = {
+  [name: string]: PathfindingAlgorithmObject;
+};

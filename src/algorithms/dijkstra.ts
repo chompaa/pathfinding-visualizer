@@ -83,5 +83,3 @@ export const dijkstra = (
     path: path.reverse().slice(1, path.length - 1),
   };
 };
-
-dijkstra.description = "Dijkstra's Algorithm";

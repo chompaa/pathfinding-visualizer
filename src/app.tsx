@@ -1,31 +1,23 @@
 import "./app.css";
 
-import { useState } from "preact/hooks";
-import { PathfindingAlgorithm, PathfindingAlgorithmType } from "./algorithms";
-import { dijkstra } from "./algorithms/dijkstra";
+import { useEffect, useState } from "preact/hooks";
+import { PathfindingAlgorithmObject } from "./algorithms";
 import Canvas from "./components/canvas";
 import Menu from "./components/menu";
 
 export function App() {
   const [pathfindingAlgorithm, setPathfindingAlgorithm] = useState<
-    PathfindingAlgorithmType | undefined
+    PathfindingAlgorithmObject | undefined
   >(undefined);
 
-  const getAlgorithm = (
-    type: PathfindingAlgorithmType | undefined
-  ): PathfindingAlgorithm | undefined => {
-    switch (type) {
-      case PathfindingAlgorithmType.Dijkstra:
-        return dijkstra;
-      default:
-        return undefined;
-    }
-  };
+  useEffect(() => {
+    console.log(pathfindingAlgorithm);
+  }, [pathfindingAlgorithm]);
 
   return (
     <div class="container">
       <Menu setAlgorithm={setPathfindingAlgorithm}></Menu>
-      <Canvas algorithm={getAlgorithm(pathfindingAlgorithm)}></Canvas>
+      <Canvas algorithm={pathfindingAlgorithm?.algorithm}></Canvas>
     </div>
   );
 }

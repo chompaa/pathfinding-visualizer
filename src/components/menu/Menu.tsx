@@ -2,7 +2,7 @@ import MenuItem from "./MenuItem";
 
 import { useState } from "preact/hooks";
 
-import { IconRefresh, IconRoute } from "@tabler/icons-preact";
+import { IconBulb, IconRouteOff, IconWallOff } from "@tabler/icons-preact";
 import {
   PathfindingAlgorithmList,
   PathfindingAlgorithmObject,
@@ -10,10 +10,17 @@ import {
 } from "../../algorithms";
 import MenuSeparator from "./MenuSeparator";
 
-const Menu = ({ setAlgorithm }: { setAlgorithm: Function }) => {
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState<
-    PathfindingAlgorithmObject | undefined
-  >(undefined);
+import { Node } from "../canvas";
+
+const Menu = ({
+  solvePath,
+  removeNodes,
+}: {
+  solvePath: Function;
+  removeNodes: Function;
+}) => {
+  const [selectedAlgorithm, setSelectedAlgorithm] =
+    useState<PathfindingAlgorithmObject>(PathfindingAlgorithms.dijkstra);
 
   const handlePathfindingAlgorithmChange = (e: any) => {
     const algorithm: string = e.target.value;
@@ -27,28 +34,55 @@ const Menu = ({ setAlgorithm }: { setAlgorithm: Function }) => {
     );
   };
 
+  const clearWalls = () => {
+    removeNodes([Node.Wall]);
+  };
+
+  const clearPath = () => {
+    removeNodes([Node.Explore, Node.Path]);
+  };
+
+  const pathfind = () => {
+    if (!selectedAlgorithm) {
+      return;
+    }
+
+    clearPath();
+    solvePath(selectedAlgorithm.algorithm);
+  };
+
   return (
     <div class="menu-island">
-      <MenuItem
-        title={"Clear grid"}
-        icon={<IconRefresh />}
-        onClick={() => {}}
-      ></MenuItem>
+      <div class="menu-section">
+        <MenuItem
+          title={"Clear walls"}
+          icon={<IconWallOff />}
+          onClick={() => clearWalls()}
+        ></MenuItem>
+        <MenuItem
+          title={"Clear path"}
+          icon={<IconRouteOff />}
+          onClick={() => clearPath()}
+        ></MenuItem>
+      </div>
       <MenuSeparator></MenuSeparator>
-      <select
-        defaultValue={undefined}
-        onChange={handlePathfindingAlgorithmChange}
-      >
-        <option>Select algorithm</option>
-        {Object.entries(PathfindingAlgorithms).map(([key, value]) => (
-          <option value={key}>{value.title}</option>
-        ))}
-      </select>
-      <MenuItem
-        title={"Solve"}
-        icon={<IconRoute />}
-        onClick={() => setAlgorithm(selectedAlgorithm)}
-      ></MenuItem>
+      <div class="menu-section">
+        <div class="menu-select">
+          <select
+            defaultValue={selectedAlgorithm.title}
+            onChange={handlePathfindingAlgorithmChange}
+          >
+            {Object.entries(PathfindingAlgorithms).map(([key, value]) => (
+              <option value={key}>{value.title}</option>
+            ))}
+          </select>
+          <MenuItem
+            title={"Solve"}
+            icon={<IconBulb />}
+            onClick={() => pathfind()}
+          ></MenuItem>
+        </div>
+      </div>
     </div>
   );
 };

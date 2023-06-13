@@ -1,36 +1,28 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { MutableRef, Ref, useEffect, useState } from "preact/hooks";
 
-import { Color, Grid, Node, Point } from ".";
-
-import {
-  PathfindingAlgorithm,
-  PathfindingAlgorithmResult,
-} from "../../algorithms";
+import { Grid, Node, Point } from ".";
 
 const Canvas = ({
-  algorithm,
+  RECT_SIZE,
+  canvas,
+  nodes,
+  source,
+  target,
+  getNodeColors,
+  drawNode,
+  animateNode,
 }: {
-  algorithm: PathfindingAlgorithm | undefined;
+  RECT_SIZE: number;
+  canvas: Ref<HTMLCanvasElement>;
+  nodes: MutableRef<Grid>;
+  source: MutableRef<Point>;
+  target: MutableRef<Point>;
+  getNodeColors: Function;
+  drawNode: Function;
+  animateNode: Function;
 }) => {
-  const canvas = useRef<HTMLCanvasElement>(null);
-
-  const COLOR_START_MAIN = { r: 255, g: 0, b: 0 };
-  const COLOR_END_MAIN = { r: 0, g: 0, b: 255 };
-  const COLOR_EMPTY_MAIN = { r: 255, g: 255, b: 255 };
-  const COLOR_WALL_MAIN = { r: 0, g: 0, b: 0 };
-  const COLOR_WALL_ALT = { r: 96, g: 96, b: 96 };
-  const COLOR_EXPLORE_MAIN = { r: 67, g: 176, b: 67 };
-  const COLOR_EXPLORE_ALT = { r: 89, g: 125, b: 53 };
-  const COLOR_PATH_MAIN = { r: 277, g: 66, b: 52 };
-  const COLOR_PATH_ALT = { r: 242, g: 133, b: 0 };
-
-  const source = useRef<Point>({ x: -1, y: -1 });
-  const target = useRef<Point>({ x: -1, y: -1 });
-  const nodes = useRef<Grid>([]);
   const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
-
-  const RECT_SIZE = 25;
 
   const getRowCount = (canvas: HTMLCanvasElement): number => {
     return canvas.width / RECT_SIZE;
@@ -40,84 +32,10 @@ const Canvas = ({
     return canvas.height / RECT_SIZE;
   };
 
-  const getNodeColors = (
-    node: Node
-  ): { main: Color; alt: Color | undefined } => {
-    switch (node) {
-      case Node.Start:
-        return { main: COLOR_START_MAIN, alt: undefined };
-      case Node.End:
-        return { main: COLOR_END_MAIN, alt: undefined };
-      case Node.Wall:
-        return { main: COLOR_WALL_MAIN, alt: COLOR_WALL_ALT };
-      case Node.Explore:
-        return { main: COLOR_EXPLORE_MAIN, alt: COLOR_EXPLORE_ALT };
-      case Node.Path:
-        return { main: COLOR_PATH_MAIN, alt: COLOR_PATH_ALT };
-      default:
-        return { main: COLOR_EMPTY_MAIN, alt: undefined };
-    }
-  };
-
-  const drawNode = (
-    context: CanvasRenderingContext2D,
-    point: Point,
-    color: Color
-  ) => {
-    const { x, y } = point;
-    const { r, g, b } = color;
-
-    context.beginPath();
-    context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    context.rect(x + 0.5, y + 0.5, RECT_SIZE, RECT_SIZE);
-    context.fill();
-    context.stroke();
-    context.closePath();
-  };
-
-  const animateNode = (
-    context: CanvasRenderingContext2D,
-    point: Point,
-    type: Node
-  ) => {
-    const { x, y } = point;
-    const { main, alt } = getNodeColors(type);
-
-    if (!alt) {
-      drawNode(context, point, main);
-      return;
-    }
-
-    const steps = 50;
-
-    const dr = (alt.r - main.r) / steps;
-    const dg = (alt.g - main.g) / steps;
-    const db = (alt.b - main.b) / steps;
-
-    let step = 0;
-
-    const animation = setInterval(() => {
-      const color = {
-        r: Math.round(alt.r - dr * step),
-        g: Math.round(alt.g - dg * step),
-        b: Math.round(alt.b - db * step),
-      };
-      drawNode(context, point, color);
-
-      const node = nodes.current[x / RECT_SIZE][y / RECT_SIZE];
-
-      if (step === steps || node !== type) {
-        clearInterval(animation);
-        drawNode(context, point, main);
-      }
-
-      step++;
-    }, 20);
-  };
-
   const drawGrid = (
     canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D
+    context: CanvasRenderingContext2D,
+    nodes: Grid
   ) => {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -129,7 +47,7 @@ const Canvas = ({
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         const point = { x: i * RECT_SIZE, y: j * RECT_SIZE };
-        const color = getNodeColors(nodes.current[i][j]).main;
+        const color = getNodeColors(nodes[i][j]).main;
 
         drawNode(context, point, color);
       }
@@ -137,6 +55,10 @@ const Canvas = ({
   };
 
   const setNode = (e: MouseEvent, point: Point) => {
+    if (!nodes.current) {
+      return;
+    }
+
     const { x, y } = point;
 
     const node = nodes.current[x][y];
@@ -161,67 +83,6 @@ const Canvas = ({
         getNodeColors(type).main
       );
     }
-  };
-
-  const solve = (pathfindingAlgorithm: PathfindingAlgorithm) => {
-    if (!canvas.current) {
-      return;
-    }
-
-    const context: CanvasRenderingContext2D | null =
-      canvas.current.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    const { explored, path }: PathfindingAlgorithmResult = pathfindingAlgorithm(
-      [...nodes.current],
-      source.current,
-      target.current
-    );
-
-    const animationTime = 20;
-    const pathDelayTime = 1000;
-    let currentTime = 0;
-
-    explored.forEach((point) => {
-      const { x, y } = point;
-
-      nodes.current[x][y] = Node.Explore;
-
-      setTimeout(
-        () =>
-          animateNode(
-            context,
-            { x: x * RECT_SIZE, y: y * RECT_SIZE },
-            Node.Explore
-          ),
-        currentTime
-      );
-
-      currentTime += animationTime;
-    });
-
-    setTimeout(() => {
-      currentTime = 0;
-      path.forEach((point) => {
-        const { x, y } = point;
-
-        nodes.current[x][y] = Node.Path;
-
-        setTimeout(
-          () =>
-            animateNode(
-              context,
-              { x: x * RECT_SIZE, y: y * RECT_SIZE },
-              Node.Path
-            ),
-          currentTime
-        );
-        currentTime += animationTime;
-      });
-    }, animationTime * explored.length + pathDelayTime);
   };
 
   const getPoint = (e: MouseEvent): Point => {
@@ -268,25 +129,16 @@ const Canvas = ({
     setPointerDown(false);
   };
 
-  const getRandomPoint = (): Point => {
+  const getRandomPoint = (nodes: Grid): Point => {
     return {
-      x: Math.floor(Math.random() * nodes.current.length),
-      y: Math.floor(Math.random() * nodes.current[0].length),
+      x: Math.floor(Math.random() * nodes.length),
+      y: Math.floor(Math.random() * nodes[0].length),
     };
   };
 
   useEffect(() => {
-    if (!algorithm || !nodes.current.length) {
-      console.log(algorithm);
-      return;
-    }
-
-    solve(algorithm);
-  }, [algorithm]);
-
-  useEffect(() => {
     const handleResize = () => {
-      if (!canvas.current) {
+      if (!canvas.current || !nodes.current) {
         return;
       }
 
@@ -310,8 +162,8 @@ const Canvas = ({
         .fill(Node.Empty)
         .map(() => new Array(columnCount).fill(Node.Empty));
 
-      source.current = getRandomPoint();
-      target.current = getRandomPoint();
+      source.current = getRandomPoint(nodes.current);
+      target.current = getRandomPoint(nodes.current);
 
       const { x: sx, y: sy } = source.current;
       const { x: tx, y: ty } = target.current;
@@ -319,7 +171,7 @@ const Canvas = ({
       nodes.current[sx][sy] = Node.Start;
       nodes.current[tx][ty] = Node.End;
 
-      drawGrid(canvas.current, context);
+      drawGrid(canvas.current, context, nodes.current);
     };
 
     handleResize();

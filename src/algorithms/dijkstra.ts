@@ -30,7 +30,7 @@ export const dijkstra = (
 
   distances[source.x][source.y] = 0;
 
-  const explored = [];
+  let explored = [];
 
   while (queue.length) {
     const u: Point = queue.reduce((p, c) =>
@@ -66,6 +66,14 @@ export const dijkstra = (
     });
   }
 
+  // filter out unreachable nodes, as well as source and target
+  explored = explored.filter(
+    (point: Point) =>
+      distances[point.x][point.y] !== Number.MAX_SAFE_INTEGER &&
+      !pointsEqual(point, source) &&
+      !pointsEqual(point, target)
+  );
+
   const path = [];
   let u = { ...target };
   const { x, y } = previous[u.x][u.y];
@@ -79,7 +87,7 @@ export const dijkstra = (
   }
 
   return {
-    explored: explored.slice(1, explored.length - 1),
+    explored: explored,
     path: path.reverse().slice(1, path.length - 1),
   };
 };

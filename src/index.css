@@ -4,14 +4,26 @@
   font-family: Assistant, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --background-color-1: #121212;
+  --background-color-2: #1e1e1e;
+  --text-color-1: #b8b8b8;
+  --text-color-2: #b3acfe;
+  --button-color-1: #262627;
+  --button-color-2: #363636;
+  --button-color-3: #504c6f;
+  --border-color-1: #3d3d3d;
+  --border-color-2: #a8a5ff;
+  --margin-main: 20px;
+  --font: Assistant;
+
+  background-color: var(--background-color-1);
 }
 
 body {

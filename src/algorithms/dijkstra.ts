@@ -1,57 +1,25 @@
-import { Node, Grid, Location, AlgorithmResult } from "../types";
-
-function get2DArray(n: number, m: number, fill: any) {
-  return Array(n)
-    .fill(fill)
-    .map(() => Array(m).fill(fill));
-}
-
-function getNeighbours(location: Location, grid: Grid): Array<Location> {
-  const { x, y } = location;
-
-  const neighbours = [
-    [0, 1],
-    [1, 0],
-    [0, -1],
-    [-1, 0],
-  ];
-
-  return neighbours
-    .filter(
-      ([dirX, dirY]) =>
-        dirX + x >= 0 &&
-        dirX + x < grid.length &&
-        dirY + y >= 0 &&
-        dirY + y < grid[0].length
-    )
-    .map(([dirX, dirY]) => ({
-      x: dirX + x,
-      y: dirY + y,
-    }));
-}
-
-const locationsEqual = (a: Location, b: Location) => {
-  return a.x === b.x && a.y === b.y;
-};
+import { PathfindingAlgorithmResult } from ".";
+import { Grid, Node, Point } from "../components/canvas";
+import { get2DArray, getNeighbours, pointsEqual } from "./util";
 
 export const dijkstra = (
   nodes: Grid,
-  source: Location,
-  target: Location
-): AlgorithmResult => {
+  source: Point,
+  target: Point
+): PathfindingAlgorithmResult => {
   const distances: Array<Array<number>> = get2DArray(
     nodes.length,
     nodes[0].length,
     Number.MAX_SAFE_INTEGER
   );
 
-  const previous: Array<Array<Location>> = get2DArray(
+  const previous: Array<Array<Point>> = get2DArray(
     nodes.length,
     nodes[0].length,
     { x: -1, y: -1 }
   );
 
-  let queue: Array<Location> = [];
+  let queue: Array<Point> = [];
   nodes.forEach((row, rowIndex) =>
     row.forEach((col, colIndex) => {
       if (col !== Node.Wall) {
@@ -60,31 +28,29 @@ export const dijkstra = (
     })
   );
 
-  console.log(queue.length);
-
   distances[source.x][source.y] = 0;
 
   const explored = [];
 
   while (queue.length) {
-    const u: Location = queue.reduce((p, c) =>
+    const u: Point = queue.reduce((p, c) =>
       distances[p.x][p.y] < distances[c.x][c.y] ? p : c
     );
 
     explored.push(u);
 
-    if (locationsEqual(u, target)) {
+    if (pointsEqual(u, target)) {
       // we've found the target, no need to keep pathing
       break;
     }
 
     // remove the current vertex
-    queue = queue.filter((v) => !locationsEqual(u, v));
+    queue = queue.filter((v) => !pointsEqual(u, v));
 
     getNeighbours(u, nodes).forEach((v) => {
       // terminate if the neighbour is not in the queue or is a wall
       if (
-        !queue.some((q) => locationsEqual(v, q)) ||
+        !queue.some((q) => pointsEqual(v, q)) ||
         nodes[v.x][v.y] === Node.Wall
       ) {
         return;
@@ -105,7 +71,7 @@ export const dijkstra = (
   const { x, y } = previous[u.x][u.y];
 
   // build path to source (backtrack)
-  if ((x !== -1 && y !== -1) || locationsEqual(u, source)) {
+  if ((x !== -1 && y !== -1) || pointsEqual(u, source)) {
     while (u.x !== -1 && u.y !== -1) {
       path.push(u);
       u = { ...previous[u.x][u.y] };

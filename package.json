@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tabler/icons-preact": "^2.22.0",
     "preact": "^10.13.2"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.5.0",
+    "prettier-plugin-organize-imports": "^3.2.2",
     "typescript": "^5.0.2",
     "vite": "^4.3.9"
   }

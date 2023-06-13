@@ -1,15 +1,17 @@
-import { useState, useRef, useEffect } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+
+import { Color, Grid, Node, Point } from ".";
 
 import {
-  Location,
-  Color,
-  Node,
-  Grid,
-  Algorithm,
-  AlgorithmResult,
-} from "../types";
+  PathfindingAlgorithm,
+  PathfindingAlgorithmResult,
+} from "../../algorithms";
 
-function Canvas({ algorithm }: { algorithm: Algorithm }) {
+const Canvas = ({
+  algorithm,
+}: {
+  algorithm: PathfindingAlgorithm | undefined;
+}) => {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   const COLOR_START_MAIN = { r: 255, g: 0, b: 0 };
@@ -22,10 +24,10 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
   const COLOR_PATH_MAIN = { r: 277, g: 66, b: 52 };
   const COLOR_PATH_ALT = { r: 242, g: 133, b: 0 };
 
-  const source = useRef<Location>({ x: -1, y: -1 });
-  const target = useRef<Location>({ x: -1, y: -1 });
+  const source = useRef<Point>({ x: -1, y: -1 });
+  const target = useRef<Point>({ x: -1, y: -1 });
   const nodes = useRef<Grid>([]);
-  const [lastLocation, setLastLocation] = useState<Location>({ x: -1, y: -1 });
+  const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
   const RECT_SIZE = 25;
@@ -59,10 +61,10 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
 
   const drawNode = (
     context: CanvasRenderingContext2D,
-    location: Location,
+    point: Point,
     color: Color
   ) => {
-    const { x, y } = location;
+    const { x, y } = point;
     const { r, g, b } = color;
 
     context.beginPath();
@@ -75,14 +77,14 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
 
   const animateNode = (
     context: CanvasRenderingContext2D,
-    location: Location,
+    point: Point,
     type: Node
   ) => {
-    const { x, y } = location;
+    const { x, y } = point;
     const { main, alt } = getNodeColors(type);
 
     if (!alt) {
-      drawNode(context, location, main);
+      drawNode(context, point, main);
       return;
     }
 
@@ -100,13 +102,13 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
         g: Math.round(alt.g - dg * step),
         b: Math.round(alt.b - db * step),
       };
-      drawNode(context, location, color);
+      drawNode(context, point, color);
 
       const node = nodes.current[x / RECT_SIZE][y / RECT_SIZE];
 
       if (step === steps || node !== type) {
         clearInterval(animation);
-        drawNode(context, location, main);
+        drawNode(context, point, main);
       }
 
       step++;
@@ -126,16 +128,16 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
-        const location = { x: i * RECT_SIZE, y: j * RECT_SIZE };
+        const point = { x: i * RECT_SIZE, y: j * RECT_SIZE };
         const color = getNodeColors(nodes.current[i][j]).main;
 
-        drawNode(context, location, color);
+        drawNode(context, point, color);
       }
     }
   };
 
-  const setNode = (e: MouseEvent, location: Location) => {
-    const { x, y } = location;
+  const setNode = (e: MouseEvent, point: Point) => {
+    const { x, y } = point;
 
     const node = nodes.current[x][y];
 
@@ -161,7 +163,7 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
     }
   };
 
-  const solve = () => {
+  const solve = (pathfindingAlgorithm: PathfindingAlgorithm) => {
     if (!canvas.current) {
       return;
     }
@@ -173,18 +175,18 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
       return;
     }
 
-    const { explored, path }: AlgorithmResult = algorithm(
+    const { explored, path }: PathfindingAlgorithmResult = pathfindingAlgorithm(
       [...nodes.current],
       source.current,
       target.current
     );
 
-    const animationTime = 50;
+    const animationTime = 20;
     const pathDelayTime = 1000;
     let currentTime = 0;
 
-    explored.forEach((location) => {
-      const { x, y } = location;
+    explored.forEach((point) => {
+      const { x, y } = point;
 
       nodes.current[x][y] = Node.Explore;
 
@@ -203,8 +205,8 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
 
     setTimeout(() => {
       currentTime = 0;
-      path.forEach((location) => {
-        const { x, y } = location;
+      path.forEach((point) => {
+        const { x, y } = point;
 
         nodes.current[x][y] = Node.Path;
 
@@ -222,7 +224,7 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
     }, animationTime * explored.length + pathDelayTime);
   };
 
-  const getLocation = (e: MouseEvent): Location => {
+  const getPoint = (e: MouseEvent): Point => {
     const target = e.target as HTMLCanvasElement;
     const rect = target.getBoundingClientRect();
 
@@ -239,26 +241,26 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    const location = getLocation(e);
-    const { x, y } = location;
+    const point = getPoint(e);
+    const { x, y } = point;
 
-    if (x === lastLocation.x && y === lastLocation.y) {
+    if (x === lastPoint.x && y === lastPoint.y) {
       return;
     }
 
-    setLastLocation(location);
+    setLastPoint(point);
 
     if (!pointerDown) {
       return;
     }
 
-    setNode(e, location);
+    setNode(e, point);
   };
 
   const handleMouseDown = (e: MouseEvent) => {
-    const location = getLocation(e);
+    const point = getPoint(e);
 
-    setNode(e, location);
+    setNode(e, point);
     setPointerDown(true);
   };
 
@@ -266,12 +268,21 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
     setPointerDown(false);
   };
 
-  const getRandomLocation = (): Location => {
+  const getRandomPoint = (): Point => {
     return {
       x: Math.floor(Math.random() * nodes.current.length),
       y: Math.floor(Math.random() * nodes.current[0].length),
     };
   };
+
+  useEffect(() => {
+    if (!algorithm || !nodes.current.length) {
+      console.log(algorithm);
+      return;
+    }
+
+    solve(algorithm);
+  }, [algorithm]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -299,8 +310,8 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
         .fill(Node.Empty)
         .map(() => new Array(columnCount).fill(Node.Empty));
 
-      source.current = getRandomLocation();
-      target.current = getRandomLocation();
+      source.current = getRandomPoint();
+      target.current = getRandomPoint();
 
       const { x: sx, y: sy } = source.current;
       const { x: tx, y: ty } = target.current;
@@ -321,18 +332,15 @@ function Canvas({ algorithm }: { algorithm: Algorithm }) {
   }, []);
 
   return (
-    <>
-      <div class="canvas-container">
-        <canvas
-          onMouseMove={handleMouseMove}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          ref={canvas}
-        ></canvas>
-      </div>
-      <button onClick={() => solve()}>Solve</button>
-    </>
+    <div class="canvas-container">
+      <canvas
+        onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        ref={canvas}
+      ></canvas>
+    </div>
   );
-}
+};
 
 export default Canvas;

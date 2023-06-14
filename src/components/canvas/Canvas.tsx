@@ -24,7 +24,7 @@ const Canvas = ({
   const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
-  // const COLOR_HOVER = { r: 218, g: 210, b: 197 };
+  const COLOR_HOVER = { r: 218, g: 210, b: 197 };
 
   const getRowCount = (canvas: HTMLCanvasElement): number => {
     return canvas.width / RECT_SIZE;
@@ -54,6 +54,33 @@ const Canvas = ({
         drawNode(context, point, color);
       }
     }
+  };
+
+  const drawCursor = (context: CanvasRenderingContext2D, point: Point) => {
+    const lineWidth = 4;
+
+    let { x, y } = point;
+    const { r: hr, g: hg, b: hb } = COLOR_HOVER;
+
+    context.strokeStyle = `rgb(${hr}, ${hg}, ${hb})`;
+    context.lineWidth = lineWidth;
+    context.lineCap = "square";
+
+    context.strokeRect(
+      x + lineWidth / 2,
+      y + lineWidth / 2,
+      RECT_SIZE - lineWidth,
+      RECT_SIZE - lineWidth
+    );
+
+    const length = RECT_SIZE / 2.5;
+
+    const { r: er, eg, eb } = getNodeColors(Node.Empty).main;
+
+    context.fillStyle = `rgb(${er}, ${eg}, ${eb})`;
+
+    context.fillRect(x + length, y, RECT_SIZE - 2 * length, RECT_SIZE);
+    context.fillRect(x, y + length, RECT_SIZE, RECT_SIZE - 2 * length);
   };
 
   const setNode = (e: MouseEvent, point: Point) => {
@@ -107,26 +134,30 @@ const Canvas = ({
     const point = getPoint(e);
     const { x, y } = point;
 
-    // const canvas = e.target as HTMLCanvasElement;
-    // const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+    const canvas = e.target as HTMLCanvasElement;
+    const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
     if (x === lastPoint.x && y === lastPoint.y) {
       return;
     }
 
-    // const last = lastPoint;
+    const { x: lx, y: ly } = lastPoint;
     setLastPoint(point);
 
     if (!pointerDown) {
-      // if (nodes.current[x][y] === Node.Empty) {
-      //   drawNode(context, { x: x * RECT_SIZE, y: y * RECT_SIZE }, COLOR_HOVER);
-      // }
+      // draw cursor on current node
+      if (nodes.current[x][y] === Node.Empty) {
+        drawCursor(context, { x: x * RECT_SIZE, y: y * RECT_SIZE });
+      }
 
-      // drawNode(
-      //   context,
-      //   { x: last.x * RECT_SIZE, y: last.y * RECT_SIZE },
-      //   getNodeColors(nodes.current[last.x][last.y]).main
-      // );
+      // restore previous node
+      if (nodes.current[lx][ly] === Node.Empty) {
+        drawNode(
+          context,
+          { x: lastPoint.x * RECT_SIZE, y: lastPoint.y * RECT_SIZE },
+          getNodeColors(nodes.current[lastPoint.x][lastPoint.y]).main
+        );
+      }
 
       return;
     }
@@ -200,7 +231,7 @@ const Canvas = ({
   }, []);
 
   return (
-    <div class="canvas-container">
+    <div class="canvas-container" style={{ borderWidth: `${RECT_SIZE}px` }}>
       <canvas
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}

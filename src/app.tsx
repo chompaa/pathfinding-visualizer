@@ -70,10 +70,14 @@ export function App() {
     color: Color
   ) => {
     const { x, y } = point;
-    const { r, g, b } = color;
+    const { r: cr, g: cg, b: cb } = color;
 
-    context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    context.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
     context.fillRect(x, y, RECT_SIZE, RECT_SIZE);
+
+    const { r: er, g: eg, b: eb } = getNodeColors(Node.Empty).main;
+
+    context.fillStyle = `rgb(${er}, ${eg}, ${eb})`;
   };
 
   const animateNode = (

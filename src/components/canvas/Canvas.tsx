@@ -24,7 +24,7 @@ const Canvas = ({
   const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
-  const COLOR_HOVER = { r: 218, g: 210, b: 197 };
+  // const COLOR_HOVER = { r: 218, g: 210, b: 197 };
 
   const getRowCount = (canvas: HTMLCanvasElement): number => {
     return canvas.width / RECT_SIZE;

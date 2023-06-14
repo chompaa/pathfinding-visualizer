@@ -21,7 +21,7 @@ const Canvas = ({
   drawNode: Function;
   animateNode: Function;
 }) => {
-  const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
+  const [lastPoint, setLastPoint] = useState<Point>({ x: 0, y: 0 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
   const COLOR_HOVER = { r: 218, g: 210, b: 197 };
@@ -131,6 +131,10 @@ const Canvas = ({
   };
 
   const handleMouseMove = (e: MouseEvent) => {
+    if (!nodes.current.length) {
+      return;
+    }
+
     const point = getPoint(e);
     const { x, y } = point;
 

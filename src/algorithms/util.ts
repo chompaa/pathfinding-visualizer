@@ -33,3 +33,7 @@ export const getNeighbours = (point: Point, grid: Grid): Array<Point> => {
 export const pointsEqual = (a: Point, b: Point) => {
   return a.x === b.x && a.y === b.y;
 };
+
+export const randomInteger = (bound: number) => {
+  return Math.floor(Math.random() * bound);
+};

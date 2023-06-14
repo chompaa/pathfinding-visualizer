@@ -2,10 +2,16 @@ import MenuItem from "./MenuItem";
 
 import { useState } from "preact/hooks";
 
-import { IconBulb, IconRouteOff, IconWallOff } from "@tabler/icons-preact";
 import {
-  PathfindingAlgorithmList,
-  PathfindingAlgorithmObject,
+  IconBulb,
+  IconRouteOff,
+  IconSettings,
+  IconWallOff,
+} from "@tabler/icons-preact";
+import {
+  AlgorithmList,
+  AlgorithmObject,
+  MazeAlgorithms,
   PathfindingAlgorithms,
 } from "../../algorithms";
 import MenuSeparator from "./MenuSeparator";
@@ -14,13 +20,19 @@ import { Node } from "../canvas";
 
 const Menu = ({
   solvePath,
+  generateMaze,
   removeNodes,
 }: {
   solvePath: Function;
+  generateMaze: Function;
   removeNodes: Function;
 }) => {
-  const [selectedAlgorithm, setSelectedAlgorithm] =
-    useState<PathfindingAlgorithmObject>(PathfindingAlgorithms.dijkstra);
+  const [pathfindingAlgorithm, setPathfindingAlgorithm] =
+    useState<AlgorithmObject>(PathfindingAlgorithms.dijkstra);
+
+  const [mazeAlgorithm, setMazeAlgorithm] = useState<AlgorithmObject>(
+    MazeAlgorithms.recursive_divide
+  );
 
   const handlePathfindingAlgorithmChange = (e: any) => {
     const algorithm: string = e.target.value;
@@ -29,9 +41,19 @@ const Menu = ({
       return;
     }
 
-    setSelectedAlgorithm(
-      (PathfindingAlgorithms as PathfindingAlgorithmList)[algorithm]
+    setPathfindingAlgorithm(
+      (PathfindingAlgorithms as AlgorithmList)[algorithm]
     );
+  };
+
+  const handleMazeAlgorithmChange = (e: any) => {
+    const algorithm: string = e.target.value;
+
+    if (!algorithm) {
+      return;
+    }
+
+    setMazeAlgorithm((MazeAlgorithms as AlgorithmList)[algorithm]);
   };
 
   const clearWalls = () => {
@@ -43,12 +65,22 @@ const Menu = ({
   };
 
   const pathfind = () => {
-    if (!selectedAlgorithm) {
+    if (!pathfindingAlgorithm) {
       return;
     }
 
     clearPath();
-    solvePath(selectedAlgorithm.algorithm);
+    solvePath(pathfindingAlgorithm.algorithm);
+  };
+
+  const generate = () => {
+    if (!mazeAlgorithm) {
+      return;
+    }
+
+    clearPath();
+    clearWalls();
+    generateMaze(mazeAlgorithm.algorithm);
   };
 
   return (
@@ -69,7 +101,7 @@ const Menu = ({
       <div class="menu-section">
         <div class="menu-select">
           <select
-            defaultValue={selectedAlgorithm.title}
+            defaultValue={pathfindingAlgorithm.title}
             onChange={handlePathfindingAlgorithmChange}
           >
             {Object.entries(PathfindingAlgorithms).map(([key, value]) => (
@@ -80,6 +112,21 @@ const Menu = ({
             title={"Solve"}
             icon={<IconBulb />}
             onClick={() => pathfind()}
+          ></MenuItem>
+        </div>
+        <div class="menu-select">
+          <select
+            defaultValue={mazeAlgorithm.title}
+            onChange={handleMazeAlgorithmChange}
+          >
+            {Object.entries(MazeAlgorithms).map(([key, value]) => (
+              <option value={key}>{value.title}</option>
+            ))}
+          </select>
+          <MenuItem
+            title={"Generate"}
+            icon={<IconSettings />}
+            onClick={() => generate()}
           ></MenuItem>
         </div>
       </div>

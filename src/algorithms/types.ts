@@ -9,15 +9,15 @@ export type PathfindingAlgorithm = {
   (nodes: Grid, source: Point, target: Point): PathfindingAlgorithmResult;
 };
 
-export enum PathfindingAlgorithmType {
-  Dijkstra,
-}
-
-export type PathfindingAlgorithmObject = {
-  title: string;
-  algorithm: PathfindingAlgorithm;
+export type MazeAlgorithm = {
+  (nodes: Grid): void;
 };
 
-export type PathfindingAlgorithmList = {
-  [name: string]: PathfindingAlgorithmObject;
+export type AlgorithmObject = {
+  title: string;
+  algorithm: PathfindingAlgorithm | MazeAlgorithm;
+};
+
+export type AlgorithmList = {
+  [name: string]: AlgorithmObject;
 };

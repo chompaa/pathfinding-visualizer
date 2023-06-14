@@ -1,7 +1,11 @@
 import "./app.css";
 
 import { useRef } from "preact/hooks";
-import { PathfindingAlgorithm, PathfindingAlgorithmResult } from "./algorithms";
+import {
+  MazeAlgorithm,
+  PathfindingAlgorithm,
+  PathfindingAlgorithmResult,
+} from "./algorithms";
 import Canvas from "./components/canvas";
 import Menu from "./components/menu";
 
@@ -15,15 +19,15 @@ export function App() {
 
   const pathAnimations = useRef<Array<number>>([]);
 
-  const COLOR_START_MAIN = { r: 255, g: 0, b: 0 };
-  const COLOR_END_MAIN = { r: 0, g: 0, b: 255 };
-  const COLOR_EMPTY_MAIN = { r: 255, g: 255, b: 255 };
-  const COLOR_WALL_MAIN = { r: 0, g: 0, b: 0 };
+  const COLOR_START_MAIN = { r: 148, g: 201, b: 115 };
+  const COLOR_END_MAIN = { r: 255, g: 165, b: 0 };
+  const COLOR_EMPTY_MAIN = { r: 248, g: 240, b: 227 };
+  const COLOR_WALL_MAIN = { r: 30, g: 30, b: 30 };
   const COLOR_WALL_ALT = { r: 96, g: 96, b: 96 };
-  const COLOR_EXPLORE_MAIN = { r: 67, g: 176, b: 67 };
-  const COLOR_EXPLORE_ALT = { r: 89, g: 125, b: 53 };
-  const COLOR_PATH_MAIN = { r: 277, g: 66, b: 52 };
-  const COLOR_PATH_ALT = { r: 242, g: 133, b: 0 };
+  const COLOR_EXPLORE_MAIN = { r: 87, g: 142, b: 135 };
+  const COLOR_EXPLORE_ALT = { r: 148, g: 201, b: 115 };
+  const COLOR_PATH_MAIN = { r: 227, g: 66, b: 52 };
+  const COLOR_PATH_ALT = { r: 255, g: 165, b: 0 };
 
   const RECT_SIZE = 20;
 
@@ -68,12 +72,8 @@ export function App() {
     const { x, y } = point;
     const { r, g, b } = color;
 
-    context.beginPath();
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    context.rect(x + 0.5, y + 0.5, RECT_SIZE, RECT_SIZE);
-    context.fill();
-    context.stroke();
-    context.closePath();
+    context.fillRect(x, y, RECT_SIZE, RECT_SIZE);
   };
 
   const animateNode = (
@@ -222,9 +222,39 @@ export function App() {
     pathAnimations.current.push(pathDelay);
   };
 
+  const generateMaze = (mazeAlgorithm: MazeAlgorithm) => {
+    const context = getContext();
+
+    if (!context) {
+      return;
+    }
+
+    mazeAlgorithm(nodes.current);
+
+    const wallColor = getNodeColors(Node.Wall).main;
+
+    nodes.current.forEach((row: Array<Node>, rowIndex: number) =>
+      row.forEach((col: Node, colIndex: number) => {
+        if (col !== Node.Wall) {
+          return;
+        }
+
+        drawNode(
+          context,
+          { x: rowIndex * RECT_SIZE, y: colIndex * RECT_SIZE },
+          wallColor
+        );
+      })
+    );
+  };
+
   return (
     <div class="container">
-      <Menu solvePath={solvePath} removeNodes={removeNodes}></Menu>
+      <Menu
+        solvePath={solvePath}
+        generateMaze={generateMaze}
+        removeNodes={removeNodes}
+      ></Menu>
       <Canvas
         RECT_SIZE={RECT_SIZE}
         canvas={canvas}

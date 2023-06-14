@@ -24,6 +24,8 @@ const Canvas = ({
   const [lastPoint, setLastPoint] = useState<Point>({ x: -1, y: -1 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
+  const COLOR_HOVER = { r: 218, g: 210, b: 197 };
+
   const getRowCount = (canvas: HTMLCanvasElement): number => {
     return canvas.width / RECT_SIZE;
   };
@@ -105,13 +107,27 @@ const Canvas = ({
     const point = getPoint(e);
     const { x, y } = point;
 
+    // const canvas = e.target as HTMLCanvasElement;
+    // const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+
     if (x === lastPoint.x && y === lastPoint.y) {
       return;
     }
 
+    // const last = lastPoint;
     setLastPoint(point);
 
     if (!pointerDown) {
+      // if (nodes.current[x][y] === Node.Empty) {
+      //   drawNode(context, { x: x * RECT_SIZE, y: y * RECT_SIZE }, COLOR_HOVER);
+      // }
+
+      // drawNode(
+      //   context,
+      //   { x: last.x * RECT_SIZE, y: last.y * RECT_SIZE },
+      //   getNodeColors(nodes.current[last.x][last.y]).main
+      // );
+
       return;
     }
 

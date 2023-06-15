@@ -1,4 +1,4 @@
-import { Grid, Point } from "../components/canvas";
+import { Grid, Point } from "../types";
 
 export type PathfindingAlgorithmResult = {
   explored: Array<Point>;

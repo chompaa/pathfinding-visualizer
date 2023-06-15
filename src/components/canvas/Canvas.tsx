@@ -1,6 +1,6 @@
 import { MutableRef, Ref, useEffect, useState } from "preact/hooks";
 
-import { Grid, Node, Point } from ".";
+import { Grid, Node, Point } from "../../types";
 
 const Canvas = ({
   RECT_SIZE,
@@ -24,7 +24,7 @@ const Canvas = ({
   const [lastPoint, setLastPoint] = useState<Point>({ x: 0, y: 0 });
   const [pointerDown, setPointerDown] = useState<boolean>(false);
 
-  const COLOR_HOVER = { r: 218, g: 210, b: 197 };
+  const COLOR_HOVER = "#dad2c5";
 
   const getRowCount = (canvas: HTMLCanvasElement): number => {
     return canvas.width / RECT_SIZE;
@@ -60,9 +60,8 @@ const Canvas = ({
     const lineWidth = 4;
 
     let { x, y } = point;
-    const { r: hr, g: hg, b: hb } = COLOR_HOVER;
 
-    context.strokeStyle = `rgb(${hr}, ${hg}, ${hb})`;
+    context.strokeStyle = COLOR_HOVER;
     context.lineWidth = lineWidth;
     context.lineCap = "square";
 
@@ -75,9 +74,9 @@ const Canvas = ({
 
     const length = RECT_SIZE / 2.5;
 
-    const { r: er, eg, eb } = getNodeColors(Node.Empty).main;
+    const { r, g, b } = getNodeColors(Node.Empty).main;
 
-    context.fillStyle = `rgb(${er}, ${eg}, ${eb})`;
+    context.fillStyle = `rgb(${r}, ${g}, ${b})`;
 
     context.fillRect(x + length, y, RECT_SIZE - 2 * length, RECT_SIZE);
     context.fillRect(x, y + length, RECT_SIZE, RECT_SIZE - 2 * length);
@@ -139,6 +138,17 @@ const Canvas = ({
     const { x, y } = point;
 
     const canvas = e.target as HTMLCanvasElement;
+
+    if (
+      x < 0 ||
+      x > getRowCount(canvas) ||
+      y < 0 ||
+      y > getColumnCount(canvas) ||
+      (x === lastPoint.x && y === lastPoint.y)
+    ) {
+      return;
+    }
+
     const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
     if (x === lastPoint.x && y === lastPoint.y) {

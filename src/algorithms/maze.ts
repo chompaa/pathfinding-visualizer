@@ -1,4 +1,4 @@
-import { Grid, Node, Point } from "../components/canvas";
+import { Grid, Node, Point } from "../types";
 import { randomInteger } from "./util";
 
 enum Orientation {

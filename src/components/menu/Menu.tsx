@@ -16,7 +16,7 @@ import {
 } from "../../algorithms";
 import MenuSeparator from "./MenuSeparator";
 
-import { Node } from "../canvas";
+import { Node } from "../../types";
 
 const Menu = ({
   solvePath,

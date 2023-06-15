@@ -9,7 +9,7 @@ import {
 import Canvas from "./components/canvas";
 import Menu from "./components/menu";
 
-import { Color, Grid, Node, Point } from "./components/canvas";
+import { Color, Grid, Node, Point } from "./types";
 
 export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -93,7 +93,7 @@ export function App() {
       return;
     }
 
-    const steps = 50;
+    const steps = 25;
 
     const dr = (alt.r - main.r) / steps;
     const dg = (alt.g - main.g) / steps;

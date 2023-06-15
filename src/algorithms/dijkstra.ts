@@ -1,5 +1,5 @@
 import { PathfindingAlgorithmResult } from ".";
-import { Grid, Node, Point } from "../components/canvas";
+import { Grid, Node, Point } from "../types";
 import { get2DArray, getNeighbours, pointsEqual } from "./util";
 
 export const dijkstra = (

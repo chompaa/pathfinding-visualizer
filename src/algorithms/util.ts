@@ -1,4 +1,4 @@
-import { Grid, Point } from "../components/canvas";
+import { Grid, Point } from "../types";
 
 export const get2DArray = (n: number, m: number, fill: any) => {
   return Array(n)

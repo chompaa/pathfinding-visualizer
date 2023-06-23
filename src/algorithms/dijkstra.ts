@@ -48,11 +48,8 @@ export const dijkstra = (
     queue = queue.filter((v) => !pointsEqual(u, v));
 
     getNeighbours(u, nodes).forEach((v) => {
-      // terminate if the neighbour is not in the queue or is a wall
-      if (
-        !queue.some((q) => pointsEqual(v, q)) ||
-        nodes[v.x][v.y] === Node.Wall
-      ) {
+      // terminate if the neighbour is not in the queue
+      if (!queue.some((q) => pointsEqual(v, q))) {
         return;
       }
 
@@ -87,7 +84,7 @@ export const dijkstra = (
   }
 
   return {
-    explored: explored,
-    path: path.reverse().slice(1, path.length - 1),
+    explored: explored.reverse(),
+    path: path.slice(1, path.length - 1),
   };
 };

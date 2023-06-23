@@ -125,9 +125,9 @@ export function App() {
   };
 
   const clearPathAnimations = () => {
-    pathAnimations.current.forEach((animation) => {
-      clearTimeout(animation);
-    });
+    pathAnimations.current.forEach((animation: number) =>
+      clearInterval(animation)
+    );
   };
 
   const removeNodes = (types: Array<Node>) => {
@@ -177,53 +177,30 @@ export function App() {
     );
 
     const animationTime = 20;
-    const pathDelayTime = 1200;
-    let currentTime = 0;
 
-    explored.forEach((point) => {
-      const { x, y } = point;
+    const animation = setInterval(() => {
+      if (explored.length) {
+        const { x, y } = explored.pop() as Point;
 
-      nodes.current[x][y] = Node.Explore;
+        nodes.current[x][y] = Node.Explore;
 
-      const animation = setTimeout(
-        () =>
-          animateNode(
-            context,
-            { x: x * RECT_SIZE, y: y * RECT_SIZE },
-            Node.Explore
-          ),
-        currentTime
-      );
-
-      pathAnimations.current.push(animation);
-
-      currentTime += animationTime;
-    });
-
-    const pathDelay = setTimeout(() => {
-      currentTime = 0;
-      path.forEach((point) => {
-        const { x, y } = point;
+        animateNode(
+          context,
+          { x: x * RECT_SIZE, y: y * RECT_SIZE },
+          Node.Explore
+        );
+      } else if (path.length) {
+        const { x, y } = path.pop() as Point;
 
         nodes.current[x][y] = Node.Path;
 
-        const animation = setTimeout(
-          () =>
-            animateNode(
-              context,
-              { x: x * RECT_SIZE, y: y * RECT_SIZE },
-              Node.Path
-            ),
-          currentTime
-        );
+        animateNode(context, { x: x * RECT_SIZE, y: y * RECT_SIZE }, Node.Path);
+      } else {
+        clearInterval(animation);
+      }
+    }, animationTime);
 
-        pathAnimations.current.push(animation);
-
-        currentTime += animationTime;
-      });
-    }, animationTime * explored.length + pathDelayTime);
-
-    pathAnimations.current.push(pathDelay);
+    pathAnimations.current.push(animation);
   };
 
   const generateMaze = (mazeAlgorithm: MazeAlgorithm) => {

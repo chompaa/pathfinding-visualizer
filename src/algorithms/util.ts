@@ -1,4 +1,4 @@
-import { Grid, Point } from "../types";
+import { Grid, Node, Point } from "../types";
 
 export const get2DArray = (n: number, m: number, fill: any) => {
   return Array(n)
@@ -10,9 +10,9 @@ export const getNeighbours = (point: Point, grid: Grid): Array<Point> => {
   const { x, y } = point;
 
   const neighbours = [
-    [0, 1],
-    [1, 0],
     [0, -1],
+    [1, 0],
+    [0, 1],
     [-1, 0],
   ];
 
@@ -22,7 +22,8 @@ export const getNeighbours = (point: Point, grid: Grid): Array<Point> => {
         dirX + x >= 0 &&
         dirX + x < grid.length &&
         dirY + y >= 0 &&
-        dirY + y < grid[0].length
+        dirY + y < grid[0].length &&
+        grid[dirX + x][dirY + y] !== Node.Wall
     )
     .map(([dirX, dirY]) => ({
       x: dirX + x,

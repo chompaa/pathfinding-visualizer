@@ -2,7 +2,7 @@
 <div align="center">
   <img src="https://github.com/chompaa/pathfinding-visualizer/assets/26204416/ca87fa7c-f574-4c3b-a5f0-3f39e6b4ae03" alt="animated" />
   <br>
-  Built with TypeScript, Rect, and Tabler Icons. Bootstrapped with Vite.
+  Built with TypeScript, React, and Tabler Icons. Bootstrapped with Vite.
   <br>
   <a href="https://chompaa.github.io/pathfinding-visualizer">Live Demo</a>
 </div>
@@ -13,8 +13,7 @@ Pathfinding:
 
 - [x] Dijkstra's
 - [ ] A star
-- [ ] Depth first search
-- [ ] Breadth first search
+- [x] Depth first search
 
 Maze generation:
 
